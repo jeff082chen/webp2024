@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>HW2</title>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+        <style>
+            table { 
+                font-family: Arial, Helvetica, sans-serif; 
+                border-collapse: collapse; 
+                width: 100%; 
+            } 
+            td, th { 
+                border: 1px solid #ddd; 
+                padding: 6px; 
+            } 
+            tr:nth-child(even){background-color: #f2f2f2;} 
+            tr:hover {background-color: #ddd;} 
+            th { 
+                padding-top: 12px; 
+                padding-bottom: 12px; 
+                text-align: left; 
+                background-color: #04AA6D; 
+                color: white; 
+            }
+            .fixed-size-table td {
+                width: 100px; /* Adjust width as needed */
+                height: 50px; /* Adjust height as needed */
+                overflow: hidden; /* Hide content that exceeds the cell size */
+                text-overflow: ellipsis; /* Show ellipsis if the content is too long */
+                white-space: nowrap; /* Prevent text from wrapping to the next line */
+            }
+        </style>
+    </head>
+    <body>
+        <h1>景點觀光展覽資訊</h1>
+        <br>
+        <!-- a search bar -->
+        <div class="input-group input-group-sm mb-3">
+            <label for="search" class="input-group-text" id="inputGroup-sizing-sm">search</label>
+            <input type="text" id="search" placeholder="請輸入關鍵字" class="form-control">
+        </div>
+        <br>
+        <table id="table" class="table-striped table-hover fixed-size-table">
+            <tr>
+                <th>名稱</th>
+                <th>地點</th>
+                <th>票價</th>
+            </tr>
+            <tr>
+                <td>資料載入中...</td>
+                <td>資料載入中...</td>
+                <td>資料載入中...</td>
+            </tr>
+        </table>
+        <div id="pagination">
+            <button id="prevPage" class="btn btn-outline-primary">上一頁</button>
+            <span id="pageInfo">第 - 頁，共 - 頁</span>
+            <button id="nextPage" class="btn btn-outline-primary">下一頁</button>
+        </div>
+    </body>
+    <script>
+        var currentPage = 1;
+        var dataPerPage = 10;
+        var totalPages = 0;
+        var datasetGlobal = [];
+        var filteredData = [];
+
+        var url = "https://cloud.culture.tw/frontsite/trans/SearchShowAction.do?method=doFindTypeJ&category=6";
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+        xhr.send();
+        xhr.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                datasetGlobal = JSON.parse(this.responseText);
+                filteredData = datasetGlobal;
+                totalPages = Math.ceil(datasetGlobal.length / dataPerPage);
+                updateTable(currentPage);
+                updatePageInfo();
+            }
+            else {
+                console.log("State: " + this.readyState)
+            }
+        }
+
+        document.getElementById('prevPage').addEventListener('click', function() {
+            if (currentPage > 1) {
+                currentPage--;
+                updateTable(currentPage);
+                updatePageInfo();
+            }
+        });
+
+        document.getElementById('nextPage').addEventListener('click', function() {
+            if (currentPage < totalPages) {
+                currentPage++;
+                updateTable(currentPage);
+                updatePageInfo();
+            }
+        });
+
+        function updateTable(page) {
+            var table = document.getElementById("table");
+            var startItem = (page - 1) * dataPerPage;
+            var endItem = startItem + dataPerPage;
+            var paginatedItems = filteredData.slice(startItem, endItem);
+
+            table.innerHTML = `
+                <tr>
+                    <th>名稱</th>
+                    <th>地點</th>
+                    <th>票價</th>
+                </tr>
+            `; // Reset table
+
+            paginatedItems.forEach(function(data) {
+                var row = table.insertRow(-1);
+                row.insertCell(0).innerHTML = data['title'];
+                row.insertCell(1).innerHTML = data['showInfo'][0] && data['showInfo'][0]['location'] ? data['showInfo'][0]['location'] : "未提供";
+                row.insertCell(2).innerHTML = data['showInfo'][0] && data['showInfo'][0]['price'] ? data['showInfo'][0]['price'] : "未提供";
+            });
+        }
+
+        function updatePageInfo() {
+            document.getElementById('pageInfo').textContent = `第 ${currentPage} 頁，共 ${totalPages} 頁`;
+        }
+
+        var searchInput = document.getElementById('search');
+        searchInput.onchange = function() {
+            var searchValue = searchInput.value;
+            filteredData = datasetGlobal.filter(function(data) {
+                return data['title'].includes(searchValue);
+            });
+            totalPages = Math.ceil(filteredData.length / dataPerPage);
+            currentPage = 1;
+            updateTable(currentPage);
+            updatePageInfo();
+        }
+    </script>
+</html>
