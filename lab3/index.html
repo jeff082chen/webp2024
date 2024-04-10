@@ -66,7 +66,7 @@
                  	  var data = JSON.parse(this.responseText);
                     console.log(data);
                     var img = document.createElement("img");
-                    result = data.sizes.size[9];
+                    result = data.sizes.size[data.sizes.size.length - 1];
                     img.setAttribute("src", result.source);
                     img.setAttribute("url", result.url);
                     gal.appendChild(img);
